@@ -1,0 +1,45 @@
+name: Build Abu Hanfi APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'abu_hanfi_flutter_mvp.zip'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get repository files
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create Android project
+        run: flutter create --platforms=android --project-name abu_hanfi_restaurant app
+
+      - name: Copy app files
+        run: |
+          mkdir source
+          unzip abu_hanfi_flutter_mvp.zip -d source
+          cp source/lib/main.dart app/lib/main.dart
+          cp source/pubspec.yaml app/pubspec.yaml
+
+      - name: Install packages
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: app
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: abu-hanfi-android-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
